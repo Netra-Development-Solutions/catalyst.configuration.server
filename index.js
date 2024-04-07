@@ -7,12 +7,13 @@ const dotenv = require('dotenv');
 const fs = require('fs');
 const path = require('path');
 const authenticateUserMiddleware = require('./middlewares/authenticate');
+const authenticateSystemUserMiddleware = require('./middlewares/authenticateSystemUser');
 
 dotenv.config();
 const app = express();
 
 const routers = require('./routers');
-
+console.log(routers);
 if (process.env.NODE_ENV === 'development') {
     var accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' })
     app.use(morgan('dev', { stream: accessLogStream }));
@@ -37,8 +38,11 @@ const generateRouters = async (routers) => {
         for (var routeIndex in router.router) {
             const Router = express.Router();
             const route = router.router[routeIndex];
-            if (route.isTokenRequired) {
+            if (route.isTokenRequired && !route.isSystemUserOnly) {
                 Router.use(authenticateUserMiddleware);
+            }
+            if (route.isSystemUserOnly) {
+                Router.use(authenticateSystemUserMiddleware);
             }
 
             Router[route.method](route.path, [...route.middlewares], route.controller);

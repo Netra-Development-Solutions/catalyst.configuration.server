@@ -2,7 +2,7 @@ const User = require("../models/User");
 const { errorResponse } = require("../utils/response");
 const jwt = require('@netra-development-solutions/utils.crypto.jsonwebtoken');
 
-const authenticateUserMiddleware = async (req, res, next) => {
+const authenticateSystemUserMiddleware = async (req, res, next) => {
     try {
         const token = req.header('Authorization')?.replace('Bearer ', '')
         if (!token) {
@@ -10,9 +10,9 @@ const authenticateUserMiddleware = async (req, res, next) => {
         }
         if (jwt.verify(token)) {
             const decoded = jwt.decode(token)
-            const user = await User.findOne({ email: decoded.email })
+            const user = await User.findById(decoded._id)
             if (!user) {
-                return errorResponse(res, { error: 'Authentication error', message: "Developer not found" }, 404)
+                return errorResponse(res, { error: 'Authentication error', message: "Invalid Token" }, 404)
             }
             req.user = user
         } else {
@@ -25,4 +25,4 @@ const authenticateUserMiddleware = async (req, res, next) => {
     }
 }
 
-module.exports = authenticateUserMiddleware;
+module.exports = authenticateSystemUserMiddleware;
