@@ -8,6 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const authenticateUserMiddleware = require('./middlewares/authenticate');
 const authenticateSystemUserMiddleware = require('./middlewares/authenticateSystemUser');
+const { successResponse } = require('./utils/response');
 
 dotenv.config();
 const app = express();
@@ -30,6 +31,10 @@ app.use(express.urlencoded({ extended: true }));
 var Table = require('cli-table');
 var table = new Table({
     head: ['Method', 'Path', 'Description']
+});
+
+app.get('/', (req, res) => {
+    return successResponse(res, null, 'Config Server is UP and Running!');
 });
 
 const generateRouters = async (routers) => {
