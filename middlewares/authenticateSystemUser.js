@@ -8,9 +8,9 @@ const authenticateSystemUserMiddleware = async (req, res, next) => {
         if (!token) {
             return errorResponse(res, { error: 'Authentication error', message: "Please authenticate" }, 401)
         }
-        const key = process.env['AES_GCM_ENCRYPTION_KEY_' + process.env.NODE_ENV.toUpperCase()];
-        const iv = process.env['AES_GCM_ENCRYPTION_IV_' + process.env.NODE_ENV.toUpperCase()];
-        const secret = process.env['JWT_TOKEN_SECRET_' + process.env.NODE_ENV.toUpperCase()];
+        const key = process.env['AES_GCM_ENCRYPTION_KEY'];
+        const iv = process.env['AES_GCM_ENCRYPTION_IV'];
+        const secret = process.env['JWT_TOKEN_SECRET'];
         if (jwt.verify(token, key, secret, iv)) {
             const decoded = jwt.decode(token, key, secret, iv)
             const user = await User.findById(decoded._id)

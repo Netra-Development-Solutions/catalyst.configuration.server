@@ -6,13 +6,23 @@ const morgan = require('morgan');
 const dotenv = require('dotenv');
 const fs = require('fs');
 const path = require('path');
+const axios = require('axios');
 const authenticateUserMiddleware = require('./middlewares/authenticate');
 const authenticateSystemUserMiddleware = require('./middlewares/authenticateSystemUser');
 const { successResponse } = require('./utils/response');
+const writeEnvFile = require('./utils/writeEnvFile');
 
 dotenv.config();
 const app = express();
-
+async function fetchServerConfigurations () {
+    const configs = (await axios.get(`${process.env.CONFIG_SERVER_BASE_URL}/api/systemConfiguration/getSystemConfiguration/${process.env.NODE_ENV.toUpperCase()}`, {
+        headers: {
+            'Authorization': `Bearer ${process.env.SYSTEM_TOKEN}`
+        }
+    })).data.data;
+    writeEnvFile(configs);
+    dotenv.config({ path: 'system.env' });
+}
 const routers = require('./routers');
 console.log(routers);
 if (process.env.NODE_ENV === 'development') {
@@ -65,18 +75,19 @@ const startServer = async () => {
         console.log('Created routers');
 
         const port = process.env.PORT || 3000;
-        if (process.env.NODE_ENV === 'development') {
-            app.listen(port, process.env.IP || '192.168.29.103', () => {
+        if (process.env.NODE_ENV === 'DEV') {
+            app.listen(port, process.env.IP || '192.168.29.103', async () => {
                 console.clear();
                 console.log(`Server started on port ${port}`);
                 console.log(table.toString());
+                await fetchServerConfigurations();
             });
         } else {
-            app.listen(port , () => {
+            app.listen(port , async () => {
                 console.clear();
                 console.log(`Server started on port ${port}`);
                 console.log(table.toString());
-                console.log(process.env)
+                await fetchServerConfigurations();
             });
         }
     } catch (err) {
