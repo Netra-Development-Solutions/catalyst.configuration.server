@@ -11,12 +11,22 @@ const SystemConfigurationSchema = new mongoose.Schema({
         unique: true
     },
     value: {
-        type: String,
-        required: true
-    },
-    env: {
-        type: String,
-        required: true
+        DEV: {
+            type: String,
+            required: true
+        },
+        QC: {
+            type: String,
+            required: true
+        },
+        UAT: {
+            type: String,
+            required: true
+        },
+        PROD: {
+            type: String,
+            required: true
+        }
     }
 }, {
     timestamps: true

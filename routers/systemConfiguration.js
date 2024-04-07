@@ -1,4 +1,4 @@
-const { createSystemConfiguration } = require("../services/SystemConfiguration");
+const { createSystemConfiguration, getSystemConfiguration } = require("../services/SystemConfiguration");
 
 const routesConfig = [
     {
@@ -6,8 +6,17 @@ const routesConfig = [
         path: '/addSystemConfiguration',
         controller: createSystemConfiguration,
         middlewares: [],
-        description: 'Add a new system user',
+        description: 'Add a new system config',
         isTokenRequired: true
+    },
+    {
+        method: 'get',
+        path: '/getSystemConfiguration/:env',
+        controller: getSystemConfiguration,
+        middlewares: [],
+        description: 'Get all system Configs',
+        isTokenRequired: true,
+        isSystemUserOnly: true
     }
 ];
 
