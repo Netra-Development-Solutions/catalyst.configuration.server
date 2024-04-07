@@ -76,6 +76,7 @@ const startServer = async () => {
                 console.clear();
                 console.log(`Server started on port ${port}`);
                 console.log(table.toString());
+                console.log(process.env)
             });
         }
     } catch (err) {
