@@ -8,9 +8,11 @@ const authenticateUserMiddleware = async (req, res, next) => {
         if (!token) {
             return errorResponse(res, { error: 'Authentication error', message: "Please authenticate" }, 401)
         }
-        console.log(token, process.env['AES_GCM_ENCRYPTION_KEY_' + process.env.NODE_ENV.toUpperCase()], process.env['JWT_TOKEN_SECRET_' + process.env.NODE_ENV.toUpperCase()], process.env['AES_GCM_ENCRYPTION_IV_' + process.env.NODE_ENV.toUpperCase()]);
-        if (jwt.verify(token, process.env['AES_GCM_ENCRYPTION_KEY_' + process.env.NODE_ENV.toUpperCase()], process.env['JWT_TOKEN_SECRET_' + process.env.NODE_ENV.toUpperCase()], process.env['AES_GCM_ENCRYPTION_IV_' + process.env.NODE_ENV.toUpperCase()])) {
-            const decoded = jwt.decode(token, process.env['AES_GCM_ENCRYPTION_KEY_' + process.env.NODE_ENV.toUpperCase()], process.env['JWT_TOKEN_SECRET_' + process.env.NODE_ENV.toUpperCase()], process.env['AES_GCM_ENCRYPTION_IV_' + process.env.NODE_ENV.toUpperCase()])
+        const key = process.env['AES_GCM_ENCRYPTION_KEY_' + process.env.NODE_ENV.toUpperCase()];
+        const iv = process.env['AES_GCM_ENCRYPTION_IV_' + process.env.NODE_ENV.toUpperCase()];
+        const secret = process.env['JWT_TOKEN_SECRET_' + process.env.NODE_ENV.toUpperCase()];
+        if (jwt.verify(token, key, secret, iv)) {
+            const decoded = jwt.decode(token, key, secret, iv)
             const user = await User.findOne({ email: decoded.email })
             if (!user) {
                 return errorResponse(res, { error: 'Authentication error', message: "Developer not found" }, 404)

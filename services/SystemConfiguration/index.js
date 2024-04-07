@@ -3,7 +3,7 @@ const { successResponse, errorResponse } = require('../../utils/response');
 
 async function createSystemConfiguration (req, res) {
     try {
-        if (!req.body.name || !req.body.key || !req.body.value || !req.body.env) {
+        if (!req.body.name || !req.body.key || !req.body.value) {
             return errorResponse(res, 'Please provide all the required fields', 400);
         }
         const systemConfigurationExists = await SystemConfiguration.findOne({ key: req.body.key });
@@ -18,6 +18,16 @@ async function createSystemConfiguration (req, res) {
     }
 }
 
+async function getSystemConfiguration (req, res) {
+    try {
+        const systemConfiguration = await SystemConfiguration.find({}, `key value.${req.params.env}`);
+        return successResponse(res, systemConfiguration, 'System Configuration fetched successfully');
+    } catch (error) {
+        return errorResponse(res, error.message, 500);
+    }
+}
+
 module.exports = {
-    createSystemConfiguration
+    createSystemConfiguration,
+    getSystemConfiguration
 };
