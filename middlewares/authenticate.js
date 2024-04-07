@@ -8,6 +8,7 @@ const authenticateUserMiddleware = async (req, res, next) => {
         if (!token) {
             return errorResponse(res, { error: 'Authentication error', message: "Please authenticate" }, 401)
         }
+        console.log(token, process.env['AES_GCM_ENCRYPTION_KEY_' + process.env.NODE_ENV.toUpperCase()], process.env['JWT_TOKEN_SECRET_' + process.env.NODE_ENV.toUpperCase()], process.env['AES_GCM_ENCRYPTION_IV_' + process.env.NODE_ENV.toUpperCase()]);
         if (jwt.verify(token, process.env['AES_GCM_ENCRYPTION_KEY_' + process.env.NODE_ENV.toUpperCase()], process.env['JWT_TOKEN_SECRET_' + process.env.NODE_ENV.toUpperCase()], process.env['AES_GCM_ENCRYPTION_IV_' + process.env.NODE_ENV.toUpperCase()])) {
             const decoded = jwt.decode(token, process.env['AES_GCM_ENCRYPTION_KEY_' + process.env.NODE_ENV.toUpperCase()], process.env['JWT_TOKEN_SECRET_' + process.env.NODE_ENV.toUpperCase()], process.env['AES_GCM_ENCRYPTION_IV_' + process.env.NODE_ENV.toUpperCase()])
             const user = await User.findOne({ email: decoded.email })
