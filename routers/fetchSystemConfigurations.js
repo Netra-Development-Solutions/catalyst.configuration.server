@@ -3,12 +3,12 @@ const { getSystemConfiguration } = require("../services/SystemConfiguration");
 const routesConfig = [
     {
         method: 'get',
-        path: '/getSystemConfiguration/:env',
+        path: '/getSystemConfiguration',
         controller: getSystemConfiguration,
         middlewares: [],
         description: 'Get all system Configs',
-        isTokenRequired: false,
-        isSystemUserOnly: false
+        isTokenRequired: true,
+        isSystemUserOnly: true
     }
 ];
 

@@ -20,7 +20,7 @@ async function createSystemConfiguration (req, res) {
 
 async function getSystemConfiguration (req, res) {
     try {
-        const systemConfiguration = await SystemConfiguration.find({}, `key value.${req.params.env}`);
+        const systemConfiguration = await SystemConfiguration.find({}, `key value.${process.env.NODE_ENV.toUpperCase()}`);
         return successResponse(res, systemConfiguration, 'System Configuration fetched successfully');
     } catch (error) {
         return errorResponse(res, error.message, 500);

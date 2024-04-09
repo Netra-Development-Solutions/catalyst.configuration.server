@@ -29,7 +29,6 @@ async function fetchServerConfigurations () {
     }
 }
 const routers = require('./routers');
-console.log(routers);
 if (process.env.NODE_ENV === 'development') {
     var accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' })
     app.use(morgan('dev', { stream: accessLogStream }));
