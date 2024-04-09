@@ -16,7 +16,7 @@ dotenv.config();
 const app = express();
 async function fetchServerConfigurations () {
     try {
-        const configs = (await axios.get(`${process.env.CONFIG_SERVER_BASE_URL}/api/fetchSystemConfigurations/getSystemConfiguration}`, {
+        const configs = (await axios.get(`${process.env.CONFIG_SERVER_BASE_URL}/api/fetchSystemConfigurations/getSystemConfiguration`, {
             headers: {
                 'Authorization': `Bearer ${process.env.SYSTEM_TOKEN}`
             }
