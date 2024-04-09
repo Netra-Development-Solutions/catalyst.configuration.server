@@ -6,7 +6,6 @@ function writeEnvFile(envVariables) {
         envContent += `${envVariables[envVariable].key}=${envVariables[envVariable].value[process.env.NODE_ENV]}\n`;
     }
     fs.writeFileSync('system.env', envContent);
-    console.log('Environment variables written to system.env', envContent);
 }
 
 module.exports = writeEnvFile;
