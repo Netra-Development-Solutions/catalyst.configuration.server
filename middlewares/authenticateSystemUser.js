@@ -3,6 +3,7 @@ const { errorResponse } = require("../utils/response");
 const jwt = require('@netra-development-solutions/utils.crypto.jsonwebtoken');
 
 const authenticateSystemUserMiddleware = async (req, res, next) => {
+    console.log('Authenticating system user...')
     try {
         const token = req.header('Authorization')?.replace('Bearer ', '')
         if (!token) {

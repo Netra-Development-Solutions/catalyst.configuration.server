@@ -8,15 +8,6 @@ const routesConfig = [
         middlewares: [],
         description: 'Add a new system config',
         isTokenRequired: true
-    },
-    {
-        method: 'get',
-        path: '/getSystemConfiguration/:env',
-        controller: getSystemConfiguration,
-        middlewares: [],
-        description: 'Get all system Configs',
-        isTokenRequired: true,
-        isSystemUserOnly: true
     }
 ];
 

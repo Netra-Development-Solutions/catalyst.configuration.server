@@ -15,13 +15,18 @@ const writeEnvFile = require('./utils/writeEnvFile');
 dotenv.config();
 const app = express();
 async function fetchServerConfigurations () {
-    const configs = (await axios.get(`${process.env.CONFIG_SERVER_BASE_URL}/api/systemConfiguration/getSystemConfiguration/${process.env.NODE_ENV.toUpperCase()}`, {
-        headers: {
-            'Authorization': `Bearer ${process.env.SYSTEM_TOKEN}`
-        }
-    })).data.data;
-    writeEnvFile(configs);
-    dotenv.config({ path: 'system.env' });
+    try {
+        const configs = (await axios.get(`${process.env.CONFIG_SERVER_BASE_URL}/api/fetchSystemConfigurations/getSystemConfiguration/${process.env.NODE_ENV.toUpperCase()}`, {
+            headers: {
+                'Authorization': `Bearer ${process.env.SYSTEM_TOKEN}`
+            }
+        })).data.data;
+        writeEnvFile(configs);
+        dotenv.config({ path: 'system.env' });
+    } catch (err) {
+        console.log(err.message);
+        return;
+    }
 }
 const routers = require('./routers');
 console.log(routers);
@@ -50,8 +55,8 @@ app.get('/', (req, res) => {
 const generateRouters = async (routers) => {
     for (var routerIndex in routers) {
         const router = routers[routerIndex];
+        const Router = new express.Router();
         for (var routeIndex in router.router) {
-            const Router = express.Router();
             const route = router.router[routeIndex];
             if (route.isTokenRequired && !route.isSystemUserOnly) {
                 Router.use(authenticateUserMiddleware);
@@ -62,8 +67,8 @@ const generateRouters = async (routers) => {
 
             Router[route.method](route.path, [...route.middlewares], route.controller);
             table.push([route.method, '/api' + router.path + route.path, route.description]);
-            app.use(`/api${router.path}`, Router);
         }
+        app.use(`/api${router.path}`, Router);
     }
 }
 
