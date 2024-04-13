@@ -103,52 +103,67 @@ pipeline {
         }
 
         stage('Get Host IP Address') {
-    steps {
-        script {
-            def hostIp
+            steps {
+                script {
+                    def hostIp = null
 
-            // Check if the operating system is Windows
-            if (isUnix()) {
-                // Debug print statement
-                echo "Using shell commands"
-                
-                // Use shell commands for Unix-like systems
-                def networkInterface = 'eth0' // Adjust as needed
-                try {
-                    hostIp = sh (
-                        script: "ip -4 addr show ${networkInterface} | grep inet | awk '{print \$2}' | cut -d/ -f1",
-                        returnStdout: true
-                    ).trim()
-                } catch (e) {
-                    echo "Error in shell script: ${e.getMessage()}"
-                }
-                
-            } else {
-                // Debug print statement
-                echo "Using PowerShell commands"
-                
-                // Use PowerShell commands for Windows
-                def networkInterface = 'Ethernet' // Adjust as needed
-                try {
-                    hostIp = powershell(
-                        returnStdout: true,
-                        script: """
-                        (Get-NetIPAddress -InterfaceAlias '${networkInterface}' | Where-Object { $_.AddressFamily -eq 'IPv4' }).IPAddress
-                        """
-                    ).trim()
-                } catch (e) {
-                    echo "Error in PowerShell script: ${e.getMessage()}"
+                    // Check the operating system
+                    if (isUnix()) {
+                        // Unix-like system detected
+                        // Define the network interface you want to use (e.g., "eth0")
+                        def networkInterface = 'eth0'
+                        
+                        // Run a shell command to retrieve the host IP address
+                        hostIp = sh (
+                            script: "ip -4 addr show ${networkInterface} | grep inet | awk '{print \$2}' | cut -d/ -f1",
+                            returnStdout: true
+                        ).trim()
+                        
+                    } else {
+                        // Windows system detected
+                        // Define the network interface you want to use (e.g., "Wi-Fi")
+                        def interfaceName = "Wi-Fi"
+
+                        // Run PowerShell to execute ipconfig and filter the output
+                        def ipconfigOutput = powershell(
+                            returnStdout: true,
+                            script: "ipconfig"
+                        ).trim()
+
+                        // Split the ipconfig output into lines
+                        def lines = ipconfigOutput.split('\n')
+                        
+                        // Iterate through the lines and extract the IP address for the specified interface
+                        def currentInterface = null
+                        for (line in lines) {
+                            line = line.trim()
+                            // Check if the line is an interface header
+                            if (line.contains("adapter")) {
+                                currentInterface = line
+                            } else if (currentInterface != null && currentInterface.contains(interfaceName)) {
+                                // Look for the IPv4 Address line
+                                if (line.startsWith("IPv4 Address")) {
+                                    // Extract the IP address from the line
+                                    hostIp = line.split(":")[1].trim()
+                                    break
+                                }
+                            }
+                        }
+
+                        // Check if host IP was found
+                        if (hostIp == null) {
+                            error("Could not find IPv4 Address for interface ${interfaceName}")
+                        }
+                    }
+
+                    // Print the retrieved IP address for debugging (optional)
+                    echo "Host IP Address: ${hostIp}"
+                    
+                    // Store the IP address as a Jenkins environment variable
+                    env.HOST_IP = hostIp
                 }
             }
-
-            // Debug print statement
-            echo "Host IP Address: ${hostIp}"
-            
-            // Store the IP address as a Jenkins environment variable
-            env.HOST_IP = hostIp
         }
-    }
-}
 
 
         stage('Run Docker Container') {
