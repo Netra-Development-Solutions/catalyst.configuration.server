@@ -9,6 +9,7 @@ pipeline {
         version = "latest"
         folder_path = "."
         repo_url = "https://github.com/Netra-Development-Solutions/catalyst.configuration.server"
+        port = "3010"
     }
     
     stages {
@@ -170,7 +171,7 @@ pipeline {
             steps {
                 script {
                     // Run Docker container
-                    bat "docker run -d -p ${env.HOST_IP}:3000:3000 --name ${docker_image_name} ${docker_username}/${docker_image_name}:latest"
+                    bat "docker run -d -p ${env.HOST_IP}:${port}:${port} --name ${docker_image_name} ${docker_username}/${docker_image_name}:latest"
                 }
             }
         }
