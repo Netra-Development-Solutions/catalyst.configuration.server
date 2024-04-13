@@ -170,7 +170,7 @@ pipeline {
             steps {
                 script {
                     // Run Docker container
-                    bat "docker run -d -p ${env.HOST_IP}3000:3000 --name dinecloud_server_usermanagement dinecloud_server_usermanagement:${env.BUILD_NUMBER}"
+                    bat "docker run -d -p ${env.HOST_IP}:3000:3000 --name ${docker_image_name} ${docker_username}/${docker_image_name}:latest"
                 }
             }
         }
