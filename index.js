@@ -79,7 +79,7 @@ const startServer = async () => {
         console.log('Created routers');
 
         const port = process.env.PORT || 3000;
-        if (process.env.IP_ENABLED.toLowerCase() === 'true') {
+        if (process.env.IP_ENABLED?.toLowerCase() === 'true') {
             app.listen(port, process.env.IP || '192.168.29.103', async () => {
                 console.clear();
                 console.log(`Server started on port ${port}`);
