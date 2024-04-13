@@ -150,6 +150,9 @@ pipeline {
                     
                     // Print the final docker-compose content for debugging (optional)
                     echo "Generated docker-compose.yml content:\n${finalContent}"
+
+                    // Stop and remove any existing containers
+                    bat "docker-compose down"
                 }
             }
         }
@@ -159,7 +162,7 @@ pipeline {
             steps {
                 script {
                     // Run docker-compose up with the generated file
-                    bat "docker-compose up --build -d --remove-orphans"
+                    bat "docker-compose up --build -d --remove-orphans --force-recreate"
                 }
             }
         }
