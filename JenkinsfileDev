@@ -1,0 +1,170 @@
+pipeline {
+    agent any
+    
+    environment {
+        docker_hub_cred = "catalyst_docker_development_hub_credentials"
+        repo_url = "https://github.com/Netra-Development-Solutions/catalyst.configuration.server"
+    }
+
+    stages {
+        
+        stage('Docker login') {
+            steps {
+                script {
+                    // Log in to Docker Hub using Jenkins credentials
+                    withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: "${docker_hub_cred}", usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD']]) {
+                        // Log in to Docker Hub
+                        try {
+                            bat "docker login -u ${DOCKER_HUB_USERNAME} -p ${DOCKER_HUB_PASSWORD}"
+                        } catch (err) {
+                            echo "Error logging in to Docker Hub: ${err}"
+                            error "Error logging in to Docker Hub: ${err}"
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Get Host IP Address') {
+            steps {
+                script {
+                    def hostIp = null
+
+                    // Check the operating system
+                    if (isUnix()) {
+                        // Unix-like system detected
+                        // Define the network interface you want to use (e.g., "eth0")
+                        def networkInterface = 'eth0'
+                        
+                        // Run a shell command to retrieve the host IP address
+                        hostIp = sh (
+                            script: "ip -4 addr show ${networkInterface} | grep inet | awk '{print \$2}' | cut -d/ -f1",
+                            returnStdout: true
+                        ).trim()
+                        
+                    } else {
+                        // Windows system detected
+                        // Define the network interface you want to use (e.g., "Wi-Fi")
+                        def interfaceName = "Wi-Fi"
+
+                        // Run PowerShell to execute ipconfig and filter the output
+                        def ipconfigOutput = powershell(
+                            returnStdout: true,
+                            script: "ipconfig"
+                        ).trim()
+
+                        // Split the ipconfig output into lines
+                        def lines = ipconfigOutput.split('\n')
+                        
+                        // Iterate through the lines and extract the IP address for the specified interface
+                        def currentInterface = null
+                        for (line in lines) {
+                            line = line.trim()
+                            // Check if the line is an interface header
+                            if (line.contains("adapter")) {
+                                currentInterface = line
+                            } else if (currentInterface != null && currentInterface.contains(interfaceName)) {
+                                // Look for the IPv4 Address line
+                                if (line.startsWith("IPv4 Address")) {
+                                    // Extract the IP address from the line
+                                    hostIp = line.split(":")[1].trim()
+                                    break
+                                }
+                            }
+                        }
+
+                        // Check if host IP was found
+                        if (hostIp == null) {
+                            error("Could not find IPv4 Address for interface ${interfaceName}")
+                        }
+                    }
+
+                    // Print the retrieved IP address for debugging (optional)
+                    echo "Host IP Address: ${hostIp}"
+                    
+                    // Store the IP address as a Jenkins environment variable
+                    env.HOST_IP = hostIp
+                }
+            }
+        }
+
+        stage('Use Secret File') {
+            steps {
+                script {
+                    // Use withCredentials block to access the Secret File credential
+                    withCredentials([file(credentialsId: 'CONFIGURATION_SERVER_DOCKER_DEV_ENV', variable: 'SECRET_FILE_PATH')]) {
+                        // SECRET_FILE_PATH contains the local file path where the secret file is stored
+
+                        // Define the file path for the .envDev file
+                        def envDevFilePath = '.envDev'
+
+                        // Copy the secret file to .envDev and load environment variables based on the OS
+                        if (isUnix()) {
+                            // For Unix-like systems (Linux, macOS)
+                            sh "cp ${SECRET_FILE_PATH} ${envDevFilePath}"
+
+                            // Verify the contents of the .envDev file (for debugging)
+                            echo "Contents of ${envDevFilePath} file:"
+                            sh "cat ${envDevFilePath}"
+
+                            // Source the .envDev file to load environment variables
+                            sh "export \$(cat ${envDevFilePath} | xargs)"
+                        } else {
+                            // For Windows systems
+                            bat "copy %SECRET_FILE_PATH% ${envDevFilePath}"
+
+                            // Verify the contents of the .envDev file (for debugging)
+                            echo "Contents of ${envDevFilePath} file:"
+                            bat "type ${envDevFilePath}"
+
+                            // Set environment variables from .envDev file
+                            def envFileContent = readFile(envDevFilePath)
+                            def envVars = envFileContent.split('\n')
+                            for (line in envVars) {
+                                def (key, value) = line.split('=')
+                                bat "set ${key}=${value}"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Generate Docker Compose File') {
+            steps {
+                script {
+                    // Define the template file path
+                    def templateFilePath = 'docker-compose-template.yml'
+                    
+                    // Define the final docker-compose file path
+                    def finalFilePath = 'docker-compose.yml'
+                    
+                    // Read the template file
+                    def template = readFile(templateFilePath)
+                    
+                    // Replace the IP address placeholder with the actual IP address
+                    def finalContent = template.replaceAll('\\{HOST_IP\\}', env.HOST_IP)
+                    
+                    // Write the final content to the docker-compose file
+                    writeFile file: finalFilePath, text: finalContent
+                    
+                    // Print the final docker-compose content for debugging (optional)
+                    echo "Generated docker-compose.yml content:\n${finalContent}"
+
+                    // Stop and remove any existing containers
+                    bat "docker-compose down"
+                }
+            }
+        }
+
+
+        stage('Run Docker Compose') {
+            steps {
+                script {
+                    // Run docker-compose up with the generated file
+                    bat "docker-compose up --build -d --remove-orphans --force-recreate"
+                }
+            }
+        }
+    }
+}

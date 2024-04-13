@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  catalystbuild_configuration_server:
+    image: catalystbuild/configuration.server:latest
+    ports:
+      - "{HOST_IP}:3010:3010"
+    env_file: .envDev
+    container_name: catalystbuild.configuration.server.latest
+    mem_limit: 256m
+    cpus: 0.5
+    networks:
+      - catalyst_network
+
+networks:
+  catalyst_network:
+    driver: bridge

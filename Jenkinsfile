@@ -4,11 +4,12 @@ pipeline {
     environment {
         docker_image_name = "configuration.server"
         docker_image_tag = "latest"
-        docker_username = "catalyst"
+        docker_username = "catalystbuild"
         docker_hub_cred = "catalyst_docker_development_hub_credentials"
         version = "latest"
         folder_path = "."
         repo_url = "https://github.com/Netra-Development-Solutions/catalyst.configuration.server"
+        port = "3010"
     }
     
     stages {
@@ -61,7 +62,7 @@ pipeline {
             steps {
                 dir("${folder_path}") {
                     // Build Docker image
-                    bat "docker build -t dinecloud_server_usermanagement:${env.BUILD_NUMBER} ."
+                    bat "docker build -t ${docker_image_name}:${env.BUILD_NUMBER} ."
                 }
             }
         }
@@ -98,29 +99,6 @@ pipeline {
                         bat "docker rmi ${docker_username}/${docker_image_name}:${env.BUILD_NUMBER}"
                         bat "docker rmi ${docker_image_name}:${env.BUILD_NUMBER}"
                     }
-                }
-            }
-        }
-
-        stage('Get Host IP Address') {
-            steps {
-                script {
-                    def networkInterface = 'eth0' // Adjust as needed
-                    def hostIp = sh (
-                        script: "ip -4 addr show ${networkInterface} | grep inet | awk '{print \$2}' | cut -d/ -f1",
-                        returnStdout: true
-                    ).trim()
-                    echo "Host IP Address: ${hostIp}"
-                    env.HOST_IP = hostIp
-                }
-            }
-        }
-
-        stage('Run Docker Container') {
-            steps {
-                script {
-                    // Run Docker container
-                    bat "docker run -d -p ${env.HOST_IP}3000:3000 --name dinecloud_server_usermanagement dinecloud_server_usermanagement:${env.BUILD_NUMBER}"
                 }
             }
         }
