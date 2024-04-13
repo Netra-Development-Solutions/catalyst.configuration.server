@@ -2,17 +2,18 @@ pipeline {
     agent any
     
     environment {
-        docker_image_name = "configuration.server"
-        docker_image_tag = "latest"
-        docker_username = "catalystbuild"
         docker_hub_cred = "catalyst_docker_development_hub_credentials"
-        version = "latest"
-        folder_path = "."
         repo_url = "https://github.com/Netra-Development-Solutions/catalyst.configuration.server"
-        port = "3010"
     }
 
     stages {
+        stage("Cloning GitHub Repo") {
+            steps {
+                echo "Cloning code from GitHub"
+                git branch: 'RELEASE', url: "${repo_url}"
+            }
+        }
+
         stage('Docker login') {
             steps {
                 script {
@@ -93,12 +94,36 @@ pipeline {
             }
         }
 
-
-        stage('Run Docker Container') {
+        stage('Generate Docker Compose File') {
             steps {
                 script {
-                    // Run Docker container
-                    bat "docker run -d -p ${env.HOST_IP}:${port}:${port} --name ${docker_image_name} ${docker_username}/${docker_image_name}:latest"
+                    // Define the template file path
+                    def templateFilePath = 'docker-compose-template.yml'
+                    
+                    // Define the final docker-compose file path
+                    def finalFilePath = 'docker-compose.yml'
+                    
+                    // Read the template file
+                    def template = readFile(templateFilePath)
+                    
+                    // Replace the IP address placeholder with the actual IP address
+                    def finalContent = template.replaceAll('\\{HOST_IP\\}', env.HOST_IP)
+                    
+                    // Write the final content to the docker-compose file
+                    writeFile file: finalFilePath, text: finalContent
+                    
+                    // Print the final docker-compose content for debugging (optional)
+                    echo "Generated docker-compose.yml content:\n${finalContent}"
+                }
+            }
+        }
+
+
+        stage('Run Docker Compose') {
+            steps {
+                script {
+                    // Run docker-compose up with the generated file
+                    sh "docker-compose up --build -d --remove-orphans"
                 }
             }
         }

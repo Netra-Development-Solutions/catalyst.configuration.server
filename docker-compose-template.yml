@@ -4,7 +4,7 @@ services:
   catalystbuild_configuration_server:
     image: catalystbuild/configuration.server:latest
     ports:
-      - "3010:3010"
+      - "{HOST_IP}:3010:3010"
     env_file: .envDev
     container_name: catalystbuild.configuration.server.latest
     mem_limit: 256m
