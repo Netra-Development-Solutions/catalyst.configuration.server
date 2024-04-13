@@ -88,6 +88,48 @@ pipeline {
             }
         }
 
+        stage('Use Secret File') {
+            steps {
+                script {
+                    // Use withCredentials block to access the Secret File credential
+                    withCredentials([file(credentialsId: 'CONFIGURATION_SERVER_DOCKER_DEV_ENV', variable: 'SECRET_FILE_PATH')]) {
+                        // SECRET_FILE_PATH contains the local file path where the secret file is stored
+
+                        // Define the file path for the .envDev file
+                        def envDevFilePath = '.envDev'
+
+                        // Copy the secret file to .envDev and load environment variables based on the OS
+                        if (isUnix()) {
+                            // For Unix-like systems (Linux, macOS)
+                            sh "cp ${SECRET_FILE_PATH} ${envDevFilePath}"
+
+                            // Verify the contents of the .envDev file (for debugging)
+                            echo "Contents of ${envDevFilePath} file:"
+                            sh "cat ${envDevFilePath}"
+
+                            // Source the .envDev file to load environment variables
+                            sh "export \$(cat ${envDevFilePath} | xargs)"
+                        } else {
+                            // For Windows systems
+                            bat "copy %SECRET_FILE_PATH% ${envDevFilePath}"
+
+                            // Verify the contents of the .envDev file (for debugging)
+                            echo "Contents of ${envDevFilePath} file:"
+                            bat "type ${envDevFilePath}"
+
+                            // Set environment variables from .envDev file
+                            def envFileContent = readFile(envDevFilePath)
+                            def envVars = envFileContent.split('\n')
+                            for (line in envVars) {
+                                def (key, value) = line.split('=')
+                                bat "set ${key}=${value}"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         stage('Generate Docker Compose File') {
             steps {
                 script {
