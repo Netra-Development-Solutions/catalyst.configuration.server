@@ -103,37 +103,53 @@ pipeline {
         }
 
         stage('Get Host IP Address') {
-            steps {
-                script {
-                    def hostIp
+    steps {
+        script {
+            def hostIp
 
-                    // Check if the operating system is Windows
-                    if (isUnix()) {
-                        // Use shell commands for Unix-like systems
-                        def networkInterface = 'eth0' // Adjust as needed
-                        hostIp = sh (
-                            script: "ip -4 addr show ${networkInterface} | grep inet | awk '{print \$2}' | cut -d/ -f1",
-                            returnStdout: true
-                        ).trim()
-                    } else {
-                        // Use PowerShell commands for Windows
-                        def networkInterface = 'Ethernet' // Adjust as needed
-                        hostIp = powershell(
-                            returnStdout: true,
-                            script: """
-                            (Get-NetIPAddress -InterfaceAlias '${networkInterface}' | Where-Object { $_.AddressFamily -eq 'IPv4' }).IPAddress
-                            """
-                        ).trim()
-                    }
-
-                    // Print the retrieved IP address for debugging (optional)
-                    echo "Host IP Address: ${hostIp}"
-                    
-                    // Store the IP address as a Jenkins environment variable
-                    env.HOST_IP = hostIp
+            // Check if the operating system is Windows
+            if (isUnix()) {
+                // Debug print statement
+                echo "Using shell commands"
+                
+                // Use shell commands for Unix-like systems
+                def networkInterface = 'eth0' // Adjust as needed
+                try {
+                    hostIp = sh (
+                        script: "ip -4 addr show ${networkInterface} | grep inet | awk '{print \$2}' | cut -d/ -f1",
+                        returnStdout: true
+                    ).trim()
+                } catch (e) {
+                    echo "Error in shell script: ${e.getMessage()}"
+                }
+                
+            } else {
+                // Debug print statement
+                echo "Using PowerShell commands"
+                
+                // Use PowerShell commands for Windows
+                def networkInterface = 'Ethernet' // Adjust as needed
+                try {
+                    hostIp = powershell(
+                        returnStdout: true,
+                        script: """
+                        (Get-NetIPAddress -InterfaceAlias '${networkInterface}' | Where-Object { $_.AddressFamily -eq 'IPv4' }).IPAddress
+                        """
+                    ).trim()
+                } catch (e) {
+                    echo "Error in PowerShell script: ${e.getMessage()}"
                 }
             }
+
+            // Debug print statement
+            echo "Host IP Address: ${hostIp}"
+            
+            // Store the IP address as a Jenkins environment variable
+            env.HOST_IP = hostIp
         }
+    }
+}
+
 
         stage('Run Docker Container') {
             steps {
