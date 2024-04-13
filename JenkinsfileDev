@@ -123,7 +123,7 @@ pipeline {
             steps {
                 script {
                     // Run docker-compose up with the generated file
-                    sh "docker-compose up --build -d --remove-orphans"
+                    sh "docker-compose up -d"
                 }
             }
         }
