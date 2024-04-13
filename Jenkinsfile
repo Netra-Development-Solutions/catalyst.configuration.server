@@ -4,7 +4,7 @@ pipeline {
     environment {
         docker_image_name = "configuration.server"
         docker_image_tag = "latest"
-        docker_username = "catalystBuild"
+        docker_username = "catalystbuild"
         docker_hub_cred = "catalyst_docker_development_hub_credentials"
         version = "latest"
         folder_path = "."
